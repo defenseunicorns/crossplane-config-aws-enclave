@@ -1,0 +1,288 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xenclaves.aws.infra.bigbang.dev
+  labels:
+    provider: aws
+spec:
+  compositeTypeRef:
+    apiVersion: infra.bigbang.dev/v1alpha1
+    kind: XEnclave
+  resources:
+    - name: vpc
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: VPC
+        spec:
+          forProvider:
+            cidrBlock: "10.0.0.0/16"
+            enableDnsHostNames: true
+            enableDnsSupport: true
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: public-subnet-a
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: Subnet
+        spec:
+          forProvider:
+            cidrBlock: "10.0.0.0/20"
+            mapPublicIPOnLaunch: true
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.availabilityZone1"
+          toFieldPath: "spec.forProvider.availabilityZone"
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: public-subnet-b
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: Subnet
+        spec:
+          forProvider:
+            cidrBlock: "10.0.16.0/20"
+            mapPublicIPOnLaunch: true
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.availabilityZone2"
+          toFieldPath: "spec.forProvider.availabilityZone"
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: public-subnet-c
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: Subnet
+        spec:
+          forProvider:
+            cidrBlock: "10.0.32.0/20"
+            mapPublicIPOnLaunch: true
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.availabilityZone3"
+          toFieldPath: "spec.forProvider.availabilityZone"
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: private-subnet-a
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: Subnet
+        spec:
+          forProvider:
+            cidrBlock: "10.0.128.0/20"
+            mapPublicIPOnLaunch: false
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.availabilityZone1"
+          toFieldPath: "spec.forProvider.availabilityZone"
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: private-subnet-b
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: Subnet
+        spec:
+          forProvider:
+            cidrBlock: "10.0.144.0/20"
+            mapPublicIPOnLaunch: false
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.availabilityZone2"
+          toFieldPath: "spec.forProvider.availabilityZone"
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: private-subnet-c
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: Subnet
+        spec:
+          forProvider:
+            cidrBlock: "10.0.160.0/20"
+            mapPublicIPOnLaunch: false
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.availabilityZone3"
+          toFieldPath: "spec.forProvider.availabilityZone"
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: dbsubnetgroup
+      base:
+        apiVersion: database.aws.crossplane.io/v1beta1
+        kind: DBSubnetGroup
+        spec:
+          forProvider:
+            description: "Subnet group for databases"
+            subnetIdRefs:
+              - name: "private-subnet-a"
+              - name: "private-subnet-b"
+              - name: "private-subnet-c"
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: internetgateway
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: InternetGateway
+        spec:
+          forProvider:
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: natgateway-eip
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: Address
+        spec:
+          forProvider:
+            domain: "vpc"
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: natgateway
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: NATGateway
+        spec:
+          forProvider:
+            allocationIdSelector:
+              matchControllerRef: true
+            subnetIdRef:
+              name: "public-subnet-a"
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: routetable-public
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: RouteTable
+        spec:
+          forProvider:
+            ignoreRoutes: true
+            associations:
+              - subnetIdRef:
+                  name: "public-subnet-a"
+              - subnetIdRef:
+                  name: "public-subnet-b"
+              - subnetIdRef:
+                  name: "public-subnet-c"
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: route-routetable-public-1
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1alpha1
+        kind: Route
+        spec:
+          forProvider:
+            destinationCIDRBlock: "0.0.0.0/0"
+            gatewayIdSelector:
+              matchControllerRef: true
+            routeTableIdRef:
+              name: "routetable-public"
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: routetable-private-a
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: RouteTable
+        spec:
+          forProvider:
+            ignoreRoutes: true
+            associations:
+              - subnetIdRef:
+                  name: "private-subnet-a"
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: route-routetable-private-a-1
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1alpha1
+        kind: Route
+        spec:
+          forProvider:
+            destinationCIDRBlock: "0.0.0.0/0"
+            natGatewayIdRef:
+              name: "natgateway"
+            routeTableIdRef:
+              name: "routetable-private-a"
+    - name: routetable-private-b
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: RouteTable
+        spec:
+          forProvider:
+            ignoreRoutes: true
+            associations:
+              - subnetIdRef:
+                  name: "private-subnet-b"
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: route-routetable-private-b-1
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1alpha1
+        kind: Route
+        spec:
+          forProvider:
+            destinationCIDRBlock: "0.0.0.0/0"
+            natGatewayIdRef:
+              name: "natgateway"
+            routeTableIdRef:
+              name: "routetable-private-b"
+    - name: routetable-private-c
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: RouteTable
+        spec:
+          forProvider:
+            ignoreRoutes: true
+            associations:
+              - subnetIdRef:
+                  name: "private-subnet-c"
+            vpcIdSelector:
+              matchControllerRef: true
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: route-routetable-private-c-1
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1alpha1
+        kind: Route
+        spec:
+          forProvider:
+            destinationCIDRBlock: "0.0.0.0/0"
+            natGatewayIdRef:
+              name: "natgateway"
+            routeTableIdRef:
+              name: "routetable-private-c"
+    - name: vpc-endpoint-s3
+      base:
+        apiVersion: ec2.aws.crossplane.io/v1alpha1
+        kind: VPCEndpoint
+        spec:
+          forProvider:
+            routeTableIdRefs:
+              - name: "routetable-private-a"
+              - name: "routetable-private-b"
+              - name: "routetable-private-c"
+            vpcIdSelector:
+              matchControllerRef: true
+            serviceName: "s3"
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
