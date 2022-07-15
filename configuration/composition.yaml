@@ -15,6 +15,7 @@ spec:
         kind: VPC
         metadata:
           labels:
+            type: vpc
             internalName: vpc
         spec:
           forProvider:
@@ -30,6 +31,8 @@ spec:
         kind: Subnet
         metadata:
           labels:
+            type: subnet
+            visibility: public
             internalName: public-subnet-a
         spec:
           forProvider:
@@ -48,6 +51,8 @@ spec:
         kind: Subnet
         metadata:
           labels:
+            type: subnet
+            visibility: public
             internalName: public-subnet-b
         spec:
           forProvider:
@@ -66,6 +71,8 @@ spec:
         kind: Subnet
         metadata:
           labels:
+            type: subnet
+            visibility: public
             internalName: public-subnet-c
         spec:
           forProvider:
@@ -84,8 +91,9 @@ spec:
         kind: Subnet
         metadata:
           labels:
-            internalName: private-subnet-a
+            type: subnet
             visibility: private
+            internalName: private-subnet-a
         spec:
           forProvider:
             cidrBlock: "10.0.128.0/20"
@@ -103,8 +111,9 @@ spec:
         kind: Subnet
         metadata:
           labels:
-            internalName: private-subnet-b
+            type: subnet
             visibility: private
+            internalName: private-subnet-b
         spec:
           forProvider:
             cidrBlock: "10.0.144.0/20"
@@ -122,8 +131,9 @@ spec:
         kind: Subnet
         metadata:
           labels:
-            internalName: private-subnet-c
+            type: subnet
             visibility: private
+            internalName: private-subnet-c
         spec:
           forProvider:
             cidrBlock: "10.0.160.0/20"
@@ -141,13 +151,14 @@ spec:
         kind: DBSubnetGroup
         metadata:
           labels:
+            type: dbsubnetgroup
             internalName: dbsubnetgroup
         spec:
           forProvider:
             description: "Subnet group for databases"
             subnetIdSelector:
-              matchControllerRef: true
               matchLabels:
+                type: subnet
                 visibility: private
             # subnetIdRefs:
             #   - name: "private-subnet-a"
@@ -162,6 +173,7 @@ spec:
         kind: InternetGateway
         metadata:
           labels:
+            type: internetgateway
             internalName: internetgateway
         spec:
           forProvider:
@@ -176,6 +188,7 @@ spec:
         kind: Address
         metadata:
           labels:
+            type: eip
             internalName: natgateway-eip
         spec:
           forProvider:
@@ -189,14 +202,17 @@ spec:
         kind: NATGateway
         metadata:
           labels:
+            type: natgateway
             internalName: natgateway
         spec:
           forProvider:
             allocationIdSelector:
-              matchControllerRef: true
-            subnetIdSelector:
-              matchControllerRef: true
               matchLabels:
+                type: eip
+                internalName: natgateway-eip
+            subnetIdSelector:
+              matchLabels:
+                type: subnet
                 internalName: "public-subnet-a"
             # subnetIdRef:
             #   name: "public-subnet-a"
@@ -209,22 +225,23 @@ spec:
         kind: RouteTable
         metadata:
           labels:
+            type: routetable
             internalName: routetable-public
         spec:
           forProvider:
             ignoreRoutes: true
             associations:
               - subnetIdSelector:
-                  matchControllerRef: true
                   matchLabels:
+                    type: subnet
                     internalName: "public-subnet-a"
               - subnetIdSelector:
-                  matchControllerRef: true
                   matchLabels:
+                    type: subnet
                     internalName: "public-subnet-b"
               - subnetIdSelector:
-                  matchControllerRef: true
                   matchLabels:
+                    type: subnet
                     internalName: "public-subnet-c"
               # - subnetIdRef:
               #     name: "public-subnet-a"
@@ -243,15 +260,18 @@ spec:
         kind: Route
         metadata:
           labels:
+            type: route
             internalName: route-routetable-public-1
         spec:
           forProvider:
             destinationCIDRBlock: "0.0.0.0/0"
             gatewayIdSelector:
-              matchControllerRef: true
-            routeTableIdSelector:
-              matchControllerRef: true
               matchLabels:
+                type: internetgateway
+                internalName: internetgateway
+            routeTableIdSelector:
+              matchLabels:
+                type: routetable
                 internalName: routetable-public
             # routeTableIdRef:
             #   name: "routetable-public"
@@ -264,14 +284,16 @@ spec:
         kind: RouteTable
         metadata:
           labels:
+            type: routetable
+            visibility: private
             internalName: routetable-private-a
         spec:
           forProvider:
             ignoreRoutes: true
             associations:
               - subnetIdSelector:
-                  matchControllerRef: true
                   matchLabels:
+                    type: subnet
                     internalName: "private-subnet-a"
               # - subnetIdRef:
               #     name: "private-subnet-a"
@@ -286,19 +308,20 @@ spec:
         kind: Route
         metadata:
           labels:
+            type: route
             internalName: route-routetable-private-a-1
         spec:
           forProvider:
             destinationCIDRBlock: "0.0.0.0/0"
             natGatewayIdSelector:
-              matchControllerRef: true
               matchLabels:
+                type: natgateway
                 internalName: "natgateway"
             # natGatewayIdRef:
             #   name: "natgateway"
             routeTableIdSelector:
-              matchControllerRef: true
               matchLabels:
+                type: routetable
                 internalName: routetable-private-a
             # routeTableIdRef:
             #   name: "routetable-private-a"
@@ -311,14 +334,16 @@ spec:
         kind: RouteTable
         metadata:
           labels:
+            type: routetable
+            visibility: private
             internalName: routetable-private-b
         spec:
           forProvider:
             ignoreRoutes: true
             associations:
               - subnetIdSelector:
-                  matchControllerRef: true
                   matchLabels:
+                    type: subnet
                     internalName: "private-subnet-b"
               # - subnetIdRef:
               #     name: "private-subnet-b"
@@ -333,19 +358,20 @@ spec:
         kind: Route
         metadata:
           labels:
+            type: route
             internalName: route-routetable-private-b-1
         spec:
           forProvider:
             destinationCIDRBlock: "0.0.0.0/0"
             natGatewayIdSelector:
-              matchControllerRef: true
               matchLabels:
+                type: natgateway
                 internalName: "natgateway"
             # natGatewayIdRef:
             #   name: "natgateway"
             routeTableIdSelector:
-              matchControllerRef: true
               matchLabels:
+                type: routetable
                 internalName: routetable-private-b
             # routeTableIdRef:
             #   name: "routetable-private-b"
@@ -358,14 +384,16 @@ spec:
         kind: RouteTable
         metadata:
           labels:
+            type: routetable
+            visibility: private
             internalName: routetable-private-c
         spec:
           forProvider:
             ignoreRoutes: true
             associations:
               - subnetIdSelector:
-                  matchControllerRef: true
                   matchLabels:
+                    type: subnet
                     internalName: "private-subnet-c"
               # - subnetIdRef:
               #     name: "private-subnet-c"
@@ -380,19 +408,20 @@ spec:
         kind: Route
         metadata:
           labels:
+            type: route
             internalName: route-routetable-private-c-1
         spec:
           forProvider:
             destinationCIDRBlock: "0.0.0.0/0"
             natGatewayIdSelector:
-              matchControllerRef: true
               matchLabels:
+                type: natgateway
                 internalName: "natgateway"
             # natGatewayIdRef:
             #   name: "natgateway"
             routeTableIdSelector:
-              matchControllerRef: true
               matchLabels:
+                type: routetable
                 internalName: routetable-private-c
             # routeTableIdRef:
             #   name: "routetable-private-c"
@@ -405,12 +434,13 @@ spec:
         kind: VPCEndpoint
         metadata:
           labels:
+            type: vpc-endpoint
             internalName: vpc-endpoint-s3
         spec:
           forProvider:
             routeTableIdSelector:
-              matchControllerRef: true
               matchLabels:
+                type: routetable
                 visibility: private
             # routeTableIdRefs:
             #   - name: "routetable-private-a"
