@@ -8,6 +8,13 @@ spec:
   compositeTypeRef:
     apiVersion: infra.bigbang.dev/v1alpha1
     kind: XEnclave
+
+  patchSets:
+    - name: common-parameters
+      patches:
+        - fromFieldPath: "spec.parameters.region"
+          toFieldPath: "spec.forProvider.region"
+
   resources:
     - name: vpc
       base:
@@ -22,9 +29,13 @@ spec:
             cidrBlock: "10.0.0.0/16"
             enableDnsHostNames: true
             enableDnsSupport: true
+            tags:
+              - key: Name
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: PatchSet
+          patchSetName: common-parameters
+        - fromFieldPath: spec.parameters.enclaveName
+          toFieldPath: spec.forProvider.tags[0].value
     - name: public-subnet-a
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -40,11 +51,23 @@ spec:
             mapPublicIPOnLaunch: true
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-public-subnet-a"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
         - fromFieldPath: "spec.parameters.availabilityZone1"
           toFieldPath: "spec.forProvider.availabilityZone"
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
     - name: public-subnet-b
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -60,11 +83,23 @@ spec:
             mapPublicIPOnLaunch: true
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-public-subnet-b"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
         - fromFieldPath: "spec.parameters.availabilityZone2"
           toFieldPath: "spec.forProvider.availabilityZone"
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
     - name: public-subnet-c
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -80,11 +115,23 @@ spec:
             mapPublicIPOnLaunch: true
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-public-subnet-c"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
         - fromFieldPath: "spec.parameters.availabilityZone3"
           toFieldPath: "spec.forProvider.availabilityZone"
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
     - name: private-subnet-a
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -100,11 +147,23 @@ spec:
             mapPublicIPOnLaunch: false
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-private-subnet-a"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
         - fromFieldPath: "spec.parameters.availabilityZone1"
           toFieldPath: "spec.forProvider.availabilityZone"
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
     - name: private-subnet-b
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -120,11 +179,23 @@ spec:
             mapPublicIPOnLaunch: false
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-private-subnet-b"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
         - fromFieldPath: "spec.parameters.availabilityZone2"
           toFieldPath: "spec.forProvider.availabilityZone"
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
     - name: private-subnet-c
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -140,11 +211,23 @@ spec:
             mapPublicIPOnLaunch: false
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-private-subnet-c"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
         - fromFieldPath: "spec.parameters.availabilityZone3"
           toFieldPath: "spec.forProvider.availabilityZone"
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
     - name: dbsubnetgroup
       base:
         apiVersion: database.aws.crossplane.io/v1beta1
@@ -160,13 +243,21 @@ spec:
               matchLabels:
                 type: subnet
                 visibility: private
-            # subnetIdRefs:
-            #   - name: "private-subnet-a"
-            #   - name: "private-subnet-b"
-            #   - name: "private-subnet-c"
+            tags:
+              - key: Name
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-dbsubnetgroup"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: internetgateway
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -179,9 +270,21 @@ spec:
           forProvider:
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-internetgateway"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: natgateway-eip
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -193,9 +296,21 @@ spec:
         spec:
           forProvider:
             domain: "vpc"
+            tags:
+              - key: Name
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-natgateway-eip"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: natgateway
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -214,11 +329,21 @@ spec:
               matchLabels:
                 type: subnet
                 internalName: "public-subnet-a"
-            # subnetIdRef:
-            #   name: "public-subnet-a"
+            tags:
+              - key: Name
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-natgateway"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: routetable-public
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -243,17 +368,23 @@ spec:
                   matchLabels:
                     type: subnet
                     internalName: "public-subnet-c"
-              # - subnetIdRef:
-              #     name: "public-subnet-a"
-              # - subnetIdRef:
-              #     name: "public-subnet-b"
-              # - subnetIdRef:
-              #     name: "public-subnet-c"
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-routetable-public"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: route-routetable-public-1
       base:
         apiVersion: ec2.aws.crossplane.io/v1alpha1
@@ -273,11 +404,9 @@ spec:
               matchLabels:
                 type: routetable
                 internalName: routetable-public
-            # routeTableIdRef:
-            #   name: "routetable-public"
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: routetable-private-a
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -295,13 +424,25 @@ spec:
                   matchLabels:
                     type: subnet
                     internalName: "private-subnet-a"
-              # - subnetIdRef:
-              #     name: "private-subnet-a"
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-routetable-private-a"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: route-routetable-private-a-1
       base:
         apiVersion: ec2.aws.crossplane.io/v1alpha1
@@ -317,17 +458,13 @@ spec:
               matchLabels:
                 type: natgateway
                 internalName: "natgateway"
-            # natGatewayIdRef:
-            #   name: "natgateway"
             routeTableIdSelector:
               matchLabels:
                 type: routetable
                 internalName: routetable-private-a
-            # routeTableIdRef:
-            #   name: "routetable-private-a"
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: routetable-private-b
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -345,13 +482,23 @@ spec:
                   matchLabels:
                     type: subnet
                     internalName: "private-subnet-b"
-              # - subnetIdRef:
-              #     name: "private-subnet-b"
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-routetable-private-b"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: route-routetable-private-b-1
       base:
         apiVersion: ec2.aws.crossplane.io/v1alpha1
@@ -367,17 +514,13 @@ spec:
               matchLabels:
                 type: natgateway
                 internalName: "natgateway"
-            # natGatewayIdRef:
-            #   name: "natgateway"
             routeTableIdSelector:
               matchLabels:
                 type: routetable
                 internalName: routetable-private-b
-            # routeTableIdRef:
-            #   name: "routetable-private-b"
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: routetable-private-c
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -395,13 +538,23 @@ spec:
                   matchLabels:
                     type: subnet
                     internalName: "private-subnet-c"
-              # - subnetIdRef:
-              #     name: "private-subnet-c"
             vpcIdSelector:
               matchControllerRef: true
+            tags:
+              - key: Name
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.parameters.enclaveName
+            strategy: string
+            string:
+              fmt: "%s-routetable-private-c"
+          toFieldPath: spec.forProvider.tags[0].value
+          policy:
+            fromFieldPath: Required
+        - type: PatchSet
+          patchSetName: common-parameters
     - name: route-routetable-private-c-1
       base:
         apiVersion: ec2.aws.crossplane.io/v1alpha1
@@ -417,38 +570,10 @@ spec:
               matchLabels:
                 type: natgateway
                 internalName: "natgateway"
-            # natGatewayIdRef:
-            #   name: "natgateway"
             routeTableIdSelector:
               matchLabels:
                 type: routetable
                 internalName: routetable-private-c
-            # routeTableIdRef:
-            #   name: "routetable-private-c"
       patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
-    - name: vpc-endpoint-s3
-      base:
-        apiVersion: ec2.aws.crossplane.io/v1alpha1
-        kind: VPCEndpoint
-        metadata:
-          labels:
-            type: vpc-endpoint
-            internalName: vpc-endpoint-s3
-        spec:
-          forProvider:
-            routeTableIdSelector:
-              matchLabels:
-                type: routetable
-                visibility: private
-            # routeTableIdRefs:
-            #   - name: "routetable-private-a"
-            #   - name: "routetable-private-b"
-            #   - name: "routetable-private-c"
-            vpcIdSelector:
-              matchControllerRef: true
-            serviceName: "s3"
-      patches:
-        - fromFieldPath: "spec.parameters.region"
-          toFieldPath: "spec.forProvider.region"
+        - type: PatchSet
+          patchSetName: common-parameters
