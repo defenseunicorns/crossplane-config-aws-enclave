@@ -1,5 +1,7 @@
 # crossplane-config-aws-enclave
 
+This repo is deprecated. Please use [crossplane-config-aws](https://github.com/defenseunicorns/crossplane-config-aws) instead.
+
 This Crossplane Configuration provides a Composite Resource Claim called "Enclave" that can be used to provision a production-ready Virtual Private Network in AWS.
 
 It will create:
